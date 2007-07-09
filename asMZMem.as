@@ -66,6 +66,9 @@ package {
     // キー定義状態
     private var keytbl: Array = new Array(256);
 
+    // CRC-Table
+    private static var CRC_TBL : Array = new Array(256);
+
     // アプレット状態
     private static var ST: int;
 
@@ -92,20 +95,33 @@ package {
       child = new Sprite();
       addChild(child);
 
+      // 仮想画面追加
+      offImg = new BitmapData(640, 400, false, 0xffffffff);
+      child.addChild(new Bitmap(offImg));
+
       // イベントリスナーの登録
       child.addEventListener(KeyboardEvent.KEY_DOWN,keyDownHandler);
       child.addEventListener(KeyboardEvent.KEY_UP,keyUpHandler);
       child.addEventListener(Event.ENTER_FRAME, enterFrameHandler);
       child.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void { stage.focus = child; });
 
-      // 仮想画面追加
-      offImg = new BitmapData(640, 400, false, 0xffffffff);
-      child.addChild(new Bitmap(offImg));
-
       // フォーカス枠の消去
       stage.stageFocusRect = false;
       // フォーカス
       stage.focus = child;
+
+      // CRCの初期化
+      var i : int, j : int;
+      for (i = 0; i < 256; i++) {
+        var l: uint = i;
+        for (j = 0; j < 8; j++) {
+          if ((l & 1) != 0)
+            l = 0xedb88320 ^ l >> 1;
+          else
+            l >>= 1;
+        }
+        CRC_TBL[i] = l;
+      }
 
       // key.def
       var keydef:ByteArray = new KeyDef();
@@ -549,7 +565,61 @@ package {
       return fOk;
     }
 
+    //-----------
+    // CRCを計算
+    //-----------
+    private function crc(abyte0 : ByteArray, pos : int, len : int) : uint {
+      var l : uint = 0xffffffff;
+      var j : int;
+      
+      for (j = 0; j < len; j++) {
+        l = CRC_TBL[(l ^ uint(abyte0[pos+j]) & 0x00ff) & 0x00ff] ^ l >> 8;
+      }
+      return l ^ 0xffffffff;
+    }
 
+    //---------------------
+    // チャンクのCRCを更新
+    //---------------------
+    // b[] = チャンクのbyte配列を示す
+    private function update_CRC(b : ByteArray, ofs : int) : void {
+      var len : int = (b[ofs]&0x00ff)<<24 | (b[ofs+1]&0x00ff)<<16 | (b[ofs+2]&0x00ff)<<8 | (b[ofs+3]&0x00ff);
+      var l : uint = crc(b, ofs+4, len+4); // include chunk name
+      
+      b[ofs+len+8] = (l >>> 24 & 255);
+      b[ofs+len+9] = (l >>> 16 & 255);
+      b[ofs+len+10] =(l >>> 8 & 255);
+      b[ofs+len+11] =(l & 255);
+    }
+
+    //------------------------
+    // パレットチャンクを探す
+    //------------------------
+    // 戻り値ofs=PLTEチャンクの先頭
+    // 'PLTE' (4bytes)
+    // Bytes (4bytes)
+    // PAL DATA = (ofs+8)
+    private static function searchPLTE(png : ByteArray) : int {
+      var ofs : int = 0;
     
+      while (true) {
+        if (png[ofs] == 'P') {
+          if (png[ofs+1] == 'L') {
+            if (png[ofs+2] == 'T') {
+              if (png[ofs+3] == 'E') {
+                break;
+              }
+            }
+          }
+        }
+        ofs++;
+      }
+      // パレット更新
+      ofs -= 4;
+      
+      return ofs;
+    }
+
+
   }
 }

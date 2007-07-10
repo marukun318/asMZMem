@@ -9,11 +9,10 @@
 package {
   import flash.ui.*;
   import flash.display.*;
+//  import flash.system.*;
   import flash.geom.*
   import flash.utils.ByteArray;
   import flash.events.*;
-
-//  import flash.events.Event;
 
   
   //文字列を表示する
@@ -32,6 +31,7 @@ package {
 	  private static const KeyDef: Class;
     
     // フォント
+/*    
     [Embed(source='./data/font0.png')] 
 	  private var Font0: Class;
     [Embed(source='./data/font1.png')] 
@@ -46,10 +46,14 @@ package {
 	  private var Font5: Class;
     [Embed(source='./data/font6.png')] 
 	  private var Font6: Class;
-    [Embed(source='./data/font7.png')] 
+    [Embed(source='./data/font7.png', mimeType='application/octet-stream')] 
 	  private var Font7: Class;
+*/
+    [Embed(source='./data/font7.png', mimeType='application/octet-stream')] 
+	  private var Font: Class;
 
     private static const font:Array = new Array(8); //イメージ
+    private static var fnt: ByteArray // フォントバイナリ
 
     // カラー
     private static const col: Array = [
@@ -76,21 +80,29 @@ package {
     private static var fShift: Boolean = false;
     private static var fCtrl: Boolean = false;
     private static var couKeyUp: int;
+
+    //
+    private static var fLoaderCmp: Boolean = false;
+
+    // 初期化完了
+    private static var fReady: Boolean = false;
+
+    // 読み込みフォントインデックス
+    private static var loadFont : int;
     
     // 仮想画面
     private static var offImg: BitmapData;
     // 子スプライト
     private static var child: Sprite;
 
+    // loader
+//    private var loader:Loader = new Loader();
+//    private var context:LoaderContext = new LoaderContext();
 
     //コンストラクタ
     public function asMZMem(){
 
       trace("asMZMem()");
-      // ＲＯＭモニタ
-      var monitor: ByteArray = new RomMon() as ByteArray;
-      // ＭＺＴイメージ
-      var mzt: ByteArray = new MztImg() as ByteArray;
 
       child = new Sprite();
       addChild(child);
@@ -115,10 +127,11 @@ package {
       for (i = 0; i < 256; i++) {
         var l: uint = i;
         for (j = 0; j < 8; j++) {
-          if ((l & 1) != 0)
-            l = 0xedb88320 ^ l >> 1;
-          else
-            l >>= 1;
+          if (l & 1) {
+            l = uint(uint(0xedb88320) ^ uint(l >>> 1));
+          } else {
+            l = uint(l >>> 1);
+          }
         }
         CRC_TBL[i] = l;
       }
@@ -127,78 +140,120 @@ package {
       var keydef:ByteArray = new KeyDef();
       setup_key(keydef);
 
-      // フォントセットアップ
-      font[0] = new Font0();
-      font[1] = new Font1();
-      font[2] = new Font2();
-      font[3] = new Font3();
-      font[4] = new Font4();
-      font[5] = new Font5();
-      font[6] = new Font6();
-      font[7] = new Font7();
+      // フォントをByteArrayで読み込み
+      fnt = new Font() as ByteArray;
 
-      // ＲＯＭモニタセットアップ
-      monitor_load(monitor);
-
-      // ＭＺＴロード
-      loadMZT(mzt);
-      resetAll();               // リセット
-
-/*
-      //ラベルの追加
-      var label:TextField=makeLabel("Hello World!");
-      label.x=10;     //X座標
-      label.y=10;     //Y座標
-      addChild(label);//追加
-*/
-
+//      fReady = true;
     }
 
     // 更新イベント
     private function enterFrameHandler(evt:Event):void {
-
-      // Shiftキーの更新
-      if (fShift) {
-        mem.keyDown(8, 0);
-      } else {
-        mem.keyUp(8, 0);
+/*
+      if (!fReady) {
+        return;
       }
-
-      // Ctrlキーの更新
-      if (fCtrl) {
-        mem.keyDown(8, 6);
-      } else {
-        mem.keyUp(8, 6);
-      }
-
+*/
       //
 	  switch (ST) {
 	   case 0:
-//        fillRect(0, 0, 640, 400, 0x0000FF);
+        //------------------
+        // イメージ読み込み
+        //------------------
+        
+        // ＲＯＭモニタ
+        var monitor: ByteArray = new RomMon() as ByteArray;
+        // ＭＺＴイメージ
+        var mzt: ByteArray = new MztImg() as ByteArray;
+
+        // ＲＯＭモニタセットアップ
+        monitor_load(monitor);
+
+        // ＭＺＴロード
+        loadMZT(mzt);
+
+        //
+        loadFont = 0;
         ST = 1;
         break;
 	      	
 	   case 1:
-        // 初期化ロード
-/*
-        // ロード
-		 load_job();
-	    
-		 // 引数によるＭＺＴ始動
-//		 String fname = getParameter("mzt");
-         String fname = "BdHopper.mzt";
-		 if (fname != null) {
-			loadMZT(fname);
-		 }
-  */
+        // フォント初期化
+        var ofs : int = searchPLTE(fnt); // パレットチャンクを探す
         
-        mem.keyClear();         // キーボード初期化
-	     resetAll();	     // リセット
+        var a : int;
+        // パレット動的作成
+        trace("loadFont="+loadFont);
+        if ((loadFont & 2) != 0) {
+          a = 0xFF;
+        } else {
+          a = 0x00;
+        }
+        fnt[ofs+11] = a;
         
-	     ST = 2;
-	     break;
+        if ((loadFont & 4) != 0) {
+          a = 0xFF;
+        } else {
+          a = 0x00;
+        }
+        fnt[ofs+12] = a;
+        
+        if ((loadFont & 1) != 0) {
+          a = 0xFF;
+        } else {
+          a = 0x00;
+        }
+        fnt[ofs+13] = a;
+        
+        //
+        update_CRC(fnt, ofs);  // CRC更新
+        
+        //
+        var loader:Loader = new Loader();
       
-      case 2:
+        loader.contentLoaderInfo.addEventListener(Event.COMPLETE, completeHandler);
+        loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+        loader.loadBytes(fnt);
+
+        ST = 2;
+        break;
+
+        case 2:
+        break;
+        
+        case 3:
+        // 次のフォントチェック
+        if ((++loadFont)>7) {
+          // 読み込み終了
+          ST = 4;
+        } else {
+          // 次のフォントへ
+          ST = 1;
+        }
+        break;
+        
+
+      case 4:
+        mem.keyClear();         // キーボード初期化
+        resetAll();	     // リセット
+        
+        ST = 9;
+        break;
+      
+      case 9:
+        // Shiftキーの更新
+        if (fShift) {
+          mem.keyDown(8, 0);
+        } else {
+          mem.keyUp(8, 0);
+        }
+
+        // Ctrlキーの更新
+        if (fCtrl) {
+          mem.keyDown(8, 6);
+        } else {
+          mem.keyUp(8, 6);
+        }
+
 //        updateKeyboard();       // キーボード更新
         
         // キー挙動　調整
@@ -231,7 +286,7 @@ package {
         // ロード
         break;
 
-      case 2:
+      case 9:
         // 描画
         drawScreenBG();
 //        offImg.lock();
@@ -332,6 +387,27 @@ package {
       
 //      evt.updateAfterEvent();
     }
+
+    // loader complete Handler
+    private function completeHandler(event:Event):void {
+      var ldr:Loader = Loader(event.target.loader);
+
+      trace(loadFont+":completeHandler("+ldr.content+")");
+
+      fLoaderCmp = true;
+      font[loadFont] = Bitmap(ldr.content);
+
+      ST = 3;
+    }
+
+    // loader error handler
+    private function ioErrorHandler(event:IOErrorEvent):void {
+      trace("Unable to load image");
+    }
+
+
+
+    
 
     // 矩形描画
     private function fillRect(x:int, y:int ,w:uint,h: uint, color:uint): void {
@@ -570,12 +646,12 @@ package {
     //-----------
     private function crc(abyte0 : ByteArray, pos : int, len : int) : uint {
       var l : uint = 0xffffffff;
-      var j : int;
-      
-      for (j = 0; j < len; j++) {
-        l = CRC_TBL[(l ^ uint(abyte0[pos+j]) & 0x00ff) & 0x00ff] ^ l >> 8;
+
+      abyte0.position = pos;
+      for (var j: int = 0; j < len; j++) {
+        l = uint(CRC_TBL[(l ^ abyte0.readUnsignedByte()) & uint(0x00ff)] ^ uint(l >>> 8) );
       }
-      return l ^ 0xffffffff;
+      return l ^ uint(0xffffffff);
     }
 
     //---------------------
@@ -585,10 +661,11 @@ package {
     private function update_CRC(b : ByteArray, ofs : int) : void {
       var len : int = (b[ofs]&0x00ff)<<24 | (b[ofs+1]&0x00ff)<<16 | (b[ofs+2]&0x00ff)<<8 | (b[ofs+3]&0x00ff);
       var l : uint = crc(b, ofs+4, len+4); // include chunk name
-      
-      b[ofs+len+8] = (l >>> 24 & 255);
-      b[ofs+len+9] = (l >>> 16 & 255);
-      b[ofs+len+10] =(l >>> 8 & 255);
+
+      trace("update_CRC("+strHex(ofs,8)+") len="+len+" crc="+strHex(l, 8));
+      b[ofs+len+8] = ((l >>> 24) & 255);
+      b[ofs+len+9] = ((l >>> 16) & 255);
+      b[ofs+len+10] =((l >>> 8) & 255);
       b[ofs+len+11] =(l & 255);
     }
 
@@ -603,10 +680,10 @@ package {
       var ofs : int = 0;
     
       while (true) {
-        if (png[ofs] == 'P') {
-          if (png[ofs+1] == 'L') {
-            if (png[ofs+2] == 'T') {
-              if (png[ofs+3] == 'E') {
+        if (png[ofs] == 0x50) { // P
+          if (png[ofs+1] == 0x4C) { // L
+            if (png[ofs+2] == 0x54) { // T
+              if (png[ofs+3] == 0x45) { // E
                 break;
               }
             }
@@ -620,6 +697,21 @@ package {
       return ofs;
     }
 
+
+	// デバッグ用16進数値表示
+	private function strHex(v: int, k: int) : String {
+		var s: String;
+		var ls: String;
+		var b: int;
+		
+		s = "0000" + v.toString(16);
+		b = s.length - k;
+		ls = s.substring(b, b+k);
+		
+		return ls;
+	}
+
+    
 
   }
 }

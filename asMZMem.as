@@ -143,6 +143,17 @@ package {
       // フォントをByteArrayで読み込み
       fnt = new Font() as ByteArray;
 
+      // Ｗｅｂ引数取得サンプル
+      var flashvars:Object;
+      var param1:String;
+      var param2:String;
+      
+      flashvars = LoaderInfo(loaderInfo).parameters;
+      param1 = flashvars["mzt"];
+      param2 = flashvars["param2"];
+
+      trace("param1="+param1);
+      trace("param2="+param2);
 //      fReady = true;
     }
 
@@ -162,14 +173,9 @@ package {
         
         // ＲＯＭモニタ
         var monitor: ByteArray = new RomMon() as ByteArray;
-        // ＭＺＴイメージ
-        var mzt: ByteArray = new MztImg() as ByteArray;
 
         // ＲＯＭモニタセットアップ
         monitor_load(monitor);
-
-        // ＭＺＴロード
-        loadMZT(mzt);
 
         //
         loadFont = 0;
@@ -233,8 +239,17 @@ package {
         
 
       case 4:
+        // ＭＺＴロード
+        var mzt: ByteArray = new MztImg() as ByteArray; // ＭＺＴイメージ
+        loadMZT(mzt);
+
+        ST = 8;
+        break;
+
+      case 8:
+        // 起動直前
         mem.keyClear();         // キーボード初期化
-        resetAll();	     // リセット
+        resetAll();             // リセット
         
         ST = 9;
         break;
@@ -289,9 +304,6 @@ package {
       case 9:
         // 描画
         drawScreenBG();
-//        offImg.lock();
-//        offImg.copyPixels(font[7].bitmapData, new Rectangle(0, 0, 128, 128), new Point(0, 0));
-//        offImg.unlock();
         drawScreenFG();
         break;
 
@@ -696,7 +708,6 @@ package {
       
       return ofs;
     }
-
 
 	// デバッグ用16進数値表示
 	private function strHex(v: int, k: int) : String {

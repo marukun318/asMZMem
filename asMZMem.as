@@ -9,10 +9,10 @@
 package {
   import flash.ui.*;
   import flash.display.*;
-//  import flash.system.*;
   import flash.geom.*
   import flash.utils.ByteArray;
   import flash.events.*;
+  import flash.net.*;
 
   
   //文字列を表示する
@@ -23,32 +23,14 @@ package {
 	  private static const RomMon: Class;
 
     // テープイメージ
-    [Embed(source='data/WH_newmon.mzt', mimeType='application/octet-stream')] 
-	  private static const MztImg: Class;
+//    [Embed(source='data/WH_newmon.mzt', mimeType='application/octet-stream')] 
+//	  private static const MztImg: Class;
     
     // key.def
     [Embed(source='./key.def', mimeType='application/octet-stream')] 
 	  private static const KeyDef: Class;
     
     // フォント
-/*    
-    [Embed(source='./data/font0.png')] 
-	  private var Font0: Class;
-    [Embed(source='./data/font1.png')] 
-	  private var Font1: Class;
-    [Embed(source='./data/font2.png')] 
-	  private var Font2: Class;
-    [Embed(source='./data/font3.png')] 
-	  private var Font3: Class;
-    [Embed(source='./data/font4.png')] 
-	  private var Font4: Class;
-    [Embed(source='./data/font5.png')] 
-	  private var Font5: Class;
-    [Embed(source='./data/font6.png')] 
-	  private var Font6: Class;
-    [Embed(source='./data/font7.png', mimeType='application/octet-stream')] 
-	  private var Font7: Class;
-*/
     [Embed(source='./data/font7.png', mimeType='application/octet-stream')] 
 	  private var Font: Class;
 
@@ -81,29 +63,19 @@ package {
     private static var fCtrl: Boolean = false;
     private static var couKeyUp: int;
 
-    //
-    private static var fLoaderCmp: Boolean = false;
-
-    // 初期化完了
-    private static var fReady: Boolean = false;
-
     // 読み込みフォントインデックス
     private static var loadFont : int;
+
+    // 読み込みmztファイル名
+    private static var mztname : String = "WH_newmon.mzt";
     
     // 仮想画面
     private static var offImg: BitmapData;
     // 子スプライト
     private static var child: Sprite;
 
-    // loader
-//    private var loader:Loader = new Loader();
-//    private var context:LoaderContext = new LoaderContext();
-
     //コンストラクタ
     public function asMZMem(){
-
-      trace("asMZMem()");
-
       child = new Sprite();
       addChild(child);
 
@@ -143,7 +115,7 @@ package {
       // フォントをByteArrayで読み込み
       fnt = new Font() as ByteArray;
 
-      // Ｗｅｂ引数取得サンプル
+      // Ｗｅｂ引数取得
       var flashvars:Object;
       var param1:String;
       var param2:String;
@@ -152,18 +124,16 @@ package {
       param1 = flashvars["mzt"];
       param2 = flashvars["param2"];
 
-      trace("param1="+param1);
-      trace("param2="+param2);
-//      fReady = true;
+      if (param1 != null) {
+        mztname = param1;
+      }
+      
+      trace("mztname = "+mztname);
+      trace("param2 = "+param2);
     }
 
     // 更新イベント
     private function enterFrameHandler(evt:Event):void {
-/*
-      if (!fReady) {
-        return;
-      }
-*/
       //
 	  switch (ST) {
 	   case 0:
@@ -240,12 +210,33 @@ package {
 
       case 4:
         // ＭＺＴロード
-        var mzt: ByteArray = new MztImg() as ByteArray; // ＭＺＴイメージ
-        loadMZT(mzt);
+//        var mzt: ByteArray = new MztImg() as ByteArray; // ＭＺＴイメージ
+//        loadMZT(mzt);
 
-        ST = 8;
+        //リクエストの生成
+        var request:URLRequest = new URLRequest(mztname);
+        
+        //ローダーの生成
+        var binloader:URLLoader = new URLLoader();
+        binloader.dataFormat = URLLoaderDataFormat.BINARY;
+
+        
+        //リスナーの指定
+        binloader.addEventListener(ProgressEvent.PROGRESS,           mzt_progressHandler);
+        binloader.addEventListener(Event.COMPLETE,                   mzt_completeHandler);
+        binloader.addEventListener(SecurityErrorEvent.SECURITY_ERROR,mzt_securityErrorHandler);
+        binloader.addEventListener(IOErrorEvent.IO_ERROR,            mzt_ioErrorHandler);
+                        
+        //XMLの読み込み
+        binloader.load(request);
+
+        ST = 5;
         break;
 
+      case 5:
+        // バイナリロード待ち
+        break;
+        
       case 8:
         // 起動直前
         mem.keyClear();         // キーボード初期化
@@ -400,13 +391,16 @@ package {
 //      evt.updateAfterEvent();
     }
 
+    //--------------------------
+    // BITMAP download handler
+    //--------------------------
+
     // loader complete Handler
     private function completeHandler(event:Event):void {
       var ldr:Loader = Loader(event.target.loader);
 
       trace(loadFont+":completeHandler("+ldr.content+")");
 
-      fLoaderCmp = true;
       font[loadFont] = Bitmap(ldr.content);
 
       ST = 3;
@@ -417,9 +411,39 @@ package {
       trace("Unable to load image");
     }
 
+    //--------------------------
+    // binary download handler
+    //--------------------------
 
-
+    // プログレスイベントの処理
+    private function mzt_progressHandler(evt:ProgressEvent):void {
+      trace("ロード中 "+evt.bytesLoaded+"/"+evt.bytesTotal);
+    }
     
+    // 完了イベントの処理
+    private function mzt_completeHandler(evt:Event):void {
+      var loader:URLLoader = URLLoader(evt.target);
+
+      // MZT読み込みバッファ
+      var mztbuf : ByteArray = loader.data;
+
+      // mzt読み込み
+      loadMZT(mztbuf);
+
+      // ステート変更
+      ST = 8;
+    }
+    
+    //IOエラーイベントの処理
+    private function mzt_ioErrorHandler(evt:IOErrorEvent):void {
+      trace("I/Oエラー");
+    }
+    
+    //セキュリティエラーイベントの処理
+    private function mzt_securityErrorHandler(evt:SecurityErrorEvent):void {
+      trace("セキュリティエラー");
+    }
+
 
     // 矩形描画
     private function fillRect(x:int, y:int ,w:uint,h: uint, color:uint): void {
@@ -557,9 +581,7 @@ package {
 
         keytbl[kc] = bit;
 
-        trace("keytbl["+kc.toString(16)+"]="+bit.toString(16));
-        
-//        trace(str);
+//        trace("keytbl["+kc.toString(16)+"]="+bit.toString(16));
       }
 
     }

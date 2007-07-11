@@ -57,6 +57,9 @@ package {
     private var io: Cio = new Cio(mem); // Ｉ／Ｏクラス
     private var z80: Cz80 = new Cz80(_8253, mem, io); // Ｚ８０クラス
 
+    // ソフトキー
+    private var skey : CSoftkey;
+
     // キー定義状態
     private var keytbl: Array = new Array(256);
 
@@ -90,6 +93,8 @@ package {
     private static var format: TextFormat; //フォーマット
     //コンストラクタ
     public function asMZMem(){
+      skey = new CSoftkey(this); // ソフトキークラスの作成
+
       ST = ST_ROMMON;           // ＲＯＭモニタセットアップ
 
       //ラベル

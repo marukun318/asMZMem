@@ -60,6 +60,9 @@ package {
     // キー定義状態
     private var keytbl: Array = new Array(256);
 
+    //ＶＲＡＭテンポラリ
+    private static var vtmp : Array = new Array(0x1000);
+
     // CRC-Table
     private static var CRC_TBL : Array = new Array(256);
 
@@ -158,8 +161,8 @@ package {
         mztname = param1;
       }
       
-      trace("mztname = "+mztname);
-      trace("param2 = "+param2);
+//      trace("mztname = "+mztname);
+//      trace("param2 = "+param2);
     }
 
     // 更新イベント
@@ -184,7 +187,7 @@ package {
         
         var a : int;
         // パレット動的作成
-        trace("loadFont="+loadFont);
+//        trace("loadFont="+loadFont);
         if ((loadFont & 2) != 0) {
           a = 0xFF;
         } else {
@@ -292,7 +295,7 @@ package {
         if (couKeyUp >0 ) {
           if ((--couKeyUp)==0) {
             mem.keyClear();
-            trace("keyClear()");
+//            trace("keyClear()");
           }
         }
         z80.update(int(Cz80.CPU_SPEED/30)); // ＣＰＵ実行：秒間３０ｆ
@@ -318,8 +321,9 @@ package {
 
       case ST_RUNNING:
         // 描画
-        drawScreenBG();
-        drawScreenFG();
+        drawScreen700();
+//        drawScreenBG();
+//        drawScreenFG();
         break;
 
         // 初期化
@@ -334,7 +338,7 @@ package {
     private function keyDownHandler(evt:KeyboardEvent):void {
 //      var c_sft: Boolean = false;
       
-      trace("Key Down: keyCode="+evt.keyCode.toString(16)+" charCode="+evt.charCode.toString(16));
+//      trace("Key Down: keyCode="+evt.keyCode.toString(16)+" charCode="+evt.charCode.toString(16));
 
       if (evt.keyCode == 0x10) {
         // Shift
@@ -384,7 +388,7 @@ package {
 
     // キーアップイベント
     private function keyUpHandler(evt:KeyboardEvent):void {
-      trace("Key Up: keyCode="+evt.keyCode.toString(16));
+//      trace("Key Up: keyCode="+evt.keyCode.toString(16));
       
       if (evt.keyCode == 0x10) {
         // Shift
@@ -596,11 +600,11 @@ package {
         for (j=0; j<40; j++) {
           a = vram[vo] & 0xFF;
           c = vram[vo+0x800] & 0xFF;
-          t = (c << 8) | a;
+//          t = (c << 8) | a;
 
-          if ((c & 0x80)!=0) {  // colorのbit7チェック
-            a += 0x100;
-          }
+//          if ((c & 0x80)!=0) {  // colorのbit7チェック
+//            a += 0x100;
+//          }
 
           // 背景色描画
           fillRect(x, y, 16, 16, col[c & 7]); // 背景色
@@ -614,6 +618,57 @@ package {
 
     }
 
+  
+  //------------------------------
+  // MZ-700の画面描画（最適化版）
+  //------------------------------
+  private function drawScreen700() : void {
+    var i : int, j : int;
+    var x : int, y : int;
+    var a : int, c : int, vo : int, vo2 : int;
+    var sx:  int, sy : int;
+    var t : int;
+    var vram : Array = mem.getMem();
+    var srcrect : Rectangle;
+
+    vo = Cmem.VID_START;
+    vo2 = 0;
+    y = 0;
+    for (i=0; i<25; i++) {
+      x = 0;
+      for (j=0; j<40; j++) {
+        a = vram[vo] & 0xFF;
+        c = vram[vo+0x800] & 0xFF;
+        t = (c << 8) | a;
+        
+        if ((c & 0x80)!=0) {  // colorのbit7チェック
+          a += 0x100;
+        }
+        
+        if (vtmp[vo2] != t) {
+          // テキスト書き換え
+          // バックカラーfill
+          fillRect(x, y, 16, 16, col[c & 7]);
+          // 文字描画
+          sx = (a & 15) << 4;
+          sy = (a & 0x1F0);
+          srcrect = new Rectangle(sx, sy, 16, 16);            // 表示元
+          drawRegion(font[(c & 0x70)>>4], x, y, srcrect);
+          //
+          vtmp[vo2] = t;
+        }
+        x += 16;
+        vo++;
+        vo2++;
+      }
+      y += 16;
+    }
+    
+
+
+  }
+
+    
     //---------------
     // キー配列の定義
     //---------------
@@ -663,6 +718,11 @@ package {
     // 全てのリセット  
     //-------------------
     private function resetAll(): void {
+      // ＶＲＡＭテンポラリの初期化
+      for (var i : int = 0; i<0x1000; i++) {
+        vtmp[i] =- 1;
+      }
+
       z80.reset();
     }
 
@@ -672,7 +732,7 @@ package {
     private function monitor_load(mon: ByteArray):void {
       var i: int;
 
-      trace("monitor_load_job()");
+//      trace("monitor_load_job()");
       
       // モニタＲＯＭ初期化
       var b:Array = mem.getMem();
@@ -769,7 +829,7 @@ package {
       var len : int = (b[ofs]&0x00ff)<<24 | (b[ofs+1]&0x00ff)<<16 | (b[ofs+2]&0x00ff)<<8 | (b[ofs+3]&0x00ff);
       var l : uint = crc(b, ofs+4, len+4); // include chunk name
 
-      trace("update_CRC("+strHex(ofs,8)+") len="+len+" crc="+strHex(l, 8));
+//      trace("update_CRC("+strHex(ofs,8)+") len="+len+" crc="+strHex(l, 8));
       b[ofs+len+8] = ((l >>> 24) & 255);
       b[ofs+len+9] = ((l >>> 16) & 255);
       b[ofs+len+10] =((l >>> 8) & 255);

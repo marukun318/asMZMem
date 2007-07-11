@@ -13,8 +13,10 @@ package {
   import flash.utils.ByteArray;
   import flash.events.*;
   import flash.net.*;
+  import flash.text.*;
 
-  
+
+
   //文字列を表示する
   public class asMZMem extends Sprite {
 
@@ -22,10 +24,6 @@ package {
     [Embed(source='data/NEWMON7.ROM', mimeType='application/octet-stream')] 
 	  private static const RomMon: Class;
 
-    // テープイメージ
-//    [Embed(source='data/WH_newmon.mzt', mimeType='application/octet-stream')] 
-//	  private static const MztImg: Class;
-    
     // key.def
     [Embed(source='./key.def', mimeType='application/octet-stream')] 
 	  private static const KeyDef: Class;
@@ -37,6 +35,16 @@ package {
     private static const font:Array = new Array(8); //イメージ
     private static var fnt: ByteArray // フォントバイナリ
 
+    // ステート定数
+    private static const ST_ROMMON : int = 0; // ＲＯＭモニタセットアップ
+    private static const ST_FONT : int = 1; // フォントセットアップ
+    private static const ST_FONTWAIT : int = 2; // フォントセットアップ待機
+    private static const ST_FONTNEXT : int = 3; // 次のフォントへ
+    private static const ST_MZT : int = 4; // ＭＺＴダウンロード
+    private static const ST_MZTWAIT : int = 5; // ＭＺＴダウンロード待機
+    private static const ST_ENGINEINIT : int = 8; // エンジン初期化
+    private static const ST_RUNNING : int = 9; // エンジン実行
+    
     // カラー
     private static const col: Array = [
       0x000000, 0x0000FF, 0xFF0000, 0xFF00FF,
@@ -74,10 +82,29 @@ package {
     // 子スプライト
     private static var child: Sprite;
 
+    // 文字表示用
+    private static var label: TextField;
+    private static var format: TextFormat; //フォーマット
     //コンストラクタ
     public function asMZMem(){
+      ST = ST_ROMMON;           // ＲＯＭモニタセットアップ
+
+      //ラベル
+      label = new TextField();
+      label.autoSize = TextFieldAutoSize.LEFT;
+      label.text = "MOJI TEST";
+
+       // フォーマット
+      format = new TextFormat();
+      format.font ="_等幅";
+      format.size = 13;
+      format.color = 0x000000;
+
+      //
       child = new Sprite();
       addChild(child);
+
+//      addChild(label);
 
       // 仮想画面追加
       offImg = new BitmapData(640, 400, false, 0xffffffff);
@@ -93,6 +120,9 @@ package {
       stage.stageFocusRect = false;
       // フォーカス
       stage.focus = child;
+
+      // 初期化文字列
+//      drawString("Now Initializing...", 0, 0);
 
       // CRCの初期化
       var i : int, j : int;
@@ -136,12 +166,8 @@ package {
     private function enterFrameHandler(evt:Event):void {
       //
 	  switch (ST) {
-	   case 0:
-        //------------------
-        // イメージ読み込み
-        //------------------
-        
-        // ＲＯＭモニタ
+	   case ST_ROMMON:
+        // ＲＯＭモニタ読み込み
         var monitor: ByteArray = new RomMon() as ByteArray;
 
         // ＲＯＭモニタセットアップ
@@ -149,10 +175,10 @@ package {
 
         //
         loadFont = 0;
-        ST = 1;
+        ST = ST_FONT;
         break;
 	      	
-	   case 1:
+	   case ST_FONT:
         // フォント初期化
         var ofs : int = searchPLTE(fnt); // パレットチャンクを探す
         
@@ -190,62 +216,62 @@ package {
         loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
         loader.loadBytes(fnt);
 
-        ST = 2;
+        ST = ST_FONTWAIT;
         break;
 
-        case 2:
+        case ST_FONTWAIT:
         break;
         
-        case 3:
+        case ST_FONTNEXT:
         // 次のフォントチェック
         if ((++loadFont)>7) {
           // 読み込み終了
-          ST = 4;
+          ST = ST_MZT;
         } else {
           // 次のフォントへ
-          ST = 1;
+          ST = ST_FONT;
         }
         break;
         
 
-      case 4:
+      case ST_MZT:
         // ＭＺＴロード
-//        var mzt: ByteArray = new MztImg() as ByteArray; // ＭＺＴイメージ
-//        loadMZT(mzt);
-
-        //リクエストの生成
+        
+        // 空プログレスバー描画
+        drawProgressBar(0, 100);
+        
+        // リクエストの生成
         var request:URLRequest = new URLRequest(mztname);
         
         //ローダーの生成
         var binloader:URLLoader = new URLLoader();
         binloader.dataFormat = URLLoaderDataFormat.BINARY;
 
-        
         //リスナーの指定
         binloader.addEventListener(ProgressEvent.PROGRESS,           mzt_progressHandler);
         binloader.addEventListener(Event.COMPLETE,                   mzt_completeHandler);
         binloader.addEventListener(SecurityErrorEvent.SECURITY_ERROR,mzt_securityErrorHandler);
         binloader.addEventListener(IOErrorEvent.IO_ERROR,            mzt_ioErrorHandler);
-                        
+
         //XMLの読み込み
         binloader.load(request);
 
-        ST = 5;
+        ST = ST_MZTWAIT;
         break;
 
-      case 5:
+      case ST_MZTWAIT:
         // バイナリロード待ち
         break;
         
-      case 8:
+      case ST_ENGINEINIT:
         // 起動直前
         mem.keyClear();         // キーボード初期化
         resetAll();             // リセット
         
-        ST = 9;
+        ST = ST_RUNNING;
         break;
       
-      case 9:
+      case ST_RUNNING:
         // Shiftキーの更新
         if (fShift) {
           mem.keyDown(8, 0);
@@ -284,18 +310,20 @@ package {
 
       // ここで描画してあげる
 	  switch (ST) {
-	   case 0:
-        // 初期化
-        break;
+//       case ST_MZT:
+//       case ST_MZTWAIT:
 
-	   case 1:
-        // ロード
-        break;
+//        break;
 
-      case 9:
+
+      case ST_RUNNING:
         // 描画
         drawScreenBG();
         drawScreenFG();
+        break;
+
+        // 初期化
+      default:
         break;
 
       }
@@ -399,16 +427,19 @@ package {
     private function completeHandler(event:Event):void {
       var ldr:Loader = Loader(event.target.loader);
 
-      trace(loadFont+":completeHandler("+ldr.content+")");
+//      trace(loadFont+":completeHandler("+ldr.content+")");
+
+      // プログレスバー描画
+      drawProgressBar(loadFont+1, 8);
 
       font[loadFont] = Bitmap(ldr.content);
 
-      ST = 3;
+      ST = ST_FONTNEXT;
     }
 
     // loader error handler
     private function ioErrorHandler(event:IOErrorEvent):void {
-      trace("Unable to load image");
+      drawString("Unable to load image", 0, 13);
     }
 
     //--------------------------
@@ -417,12 +448,19 @@ package {
 
     // プログレスイベントの処理
     private function mzt_progressHandler(evt:ProgressEvent):void {
-      trace("ロード中 "+evt.bytesLoaded+"/"+evt.bytesTotal);
+//      trace("ロード中 "+evt.bytesLoaded+"/"+evt.bytesTotal);
+//      drawString("ロード中 "+evt.bytesLoaded+"/"+evt.bytesTotal, 0, 13);
+
+      // プログレスバー描画
+      drawProgressBar(evt.bytesLoaded, evt.bytesTotal);
     }
     
     // 完了イベントの処理
     private function mzt_completeHandler(evt:Event):void {
       var loader:URLLoader = URLLoader(evt.target);
+
+      // プログレスバー描画
+      drawProgressBar(100, 100);
 
       // MZT読み込みバッファ
       var mztbuf : ByteArray = loader.data;
@@ -431,21 +469,43 @@ package {
       loadMZT(mztbuf);
 
       // ステート変更
-      ST = 8;
+      ST = ST_ENGINEINIT;
     }
+
+    // ダウンロードゲージ 描画
+    private function drawProgressBar(now:int, max:int): void {
+      var w : int = 240;
+      var h : int = 24;
+      var x : int = (640 - w) / 2;
+      var y : int = (400 - h) / 2;
+
+      // ベース
+      fillRect(x, y, w, h, 0x010101);
+      x += 2;
+      y += 2;
+      w -= 4;
+      h -= 4;
+
+      var a : int = (now << 16) / max;
+      a = (a * w) >> 16;
+
+      // 中身
+      fillRect(x, y, a, h, 0xFF0000);
+      
+    }
+
     
     //IOエラーイベントの処理
     private function mzt_ioErrorHandler(evt:IOErrorEvent):void {
-      trace("I/Oエラー");
+      drawString("ダウンロードエラー", 0, 13);
     }
     
     //セキュリティエラーイベントの処理
     private function mzt_securityErrorHandler(evt:SecurityErrorEvent):void {
-      trace("セキュリティエラー");
+      drawString("セキュリティエラー", 0, 13);
     }
 
-
-    // 矩形描画
+    // 矩形描画（塗りつぶしあり）
     private function fillRect(x:int, y:int ,w:uint,h: uint, color:uint): void {
       offImg.fillRect(new Rectangle(x, y, w, h), color);
     }
@@ -461,6 +521,19 @@ package {
     public function drawRegion(source:Bitmap, x:int, y:int, clip:Rectangle):void {
       offImg.copyPixels(source.bitmapData, clip, new Point(x, y));
     }
+
+    // 文字列の描画
+    private function drawString(text:String, x:int, y:int): void {
+      label.text = text;
+      label.setTextFormat(format);
+      var pos:Matrix = new Matrix();
+      pos.translate(
+        x - (label.width  - label.textWidth) / 2,
+        y - (label.height - label.textHeight) / 2);
+//        y - (label.height - label.textHeight) / 2 - label.textHeight);
+      offImg.draw(label, pos);
+    }
+    
 
     //--------------------------
     // MZ-700の画面描画（文字）

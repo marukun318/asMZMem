@@ -15,8 +15,6 @@ package {
   import flash.net.*;
   import flash.text.*;
 
-
-
   //文字列を表示する
   public class asMZMem extends Sprite {
 
@@ -49,6 +47,15 @@ package {
     private static const col: Array = [
       0x000000, 0x0000FF, 0xFF0000, 0xFF00FF,
       0x00FF00, 0x00FFFF, 0xFFFF00, 0xFFFFFF
+      ];
+
+    // キーボードカラー
+    private static const kb_col1 : Array = [
+      0xf0f0f0, 0x2e24fa, 0xf8ae2d, 0xf8ae2d
+      ];
+    // キーボードカラー（影）
+    private static const kb_col2 : Array = [
+      0x9c9c9b, 0x151074, 0x815a17, 0x815a17
       ];
 
     // ＶＭ関連
@@ -115,7 +122,7 @@ package {
 //      addChild(label);
 
       // 仮想画面追加
-      offImg = new BitmapData(640, 400, false, 0xffffffff);
+      offImg = new BitmapData(640, 480, false, 0xffffffff);
       child.addChild(new Bitmap(offImg));
 
       // イベントリスナーの登録
@@ -275,6 +282,9 @@ package {
         // 起動直前
         mem.keyClear();         // キーボード初期化
         resetAll();             // リセット
+
+        // ソフトキーボード描画
+        skey.softkey_draw();
         
         ST = ST_RUNNING;
         break;
@@ -329,6 +339,9 @@ package {
         drawScreen700();
 //        drawScreenBG();
 //        drawScreenFG();
+        // ソフトキーボード描画
+//        skey.softkey_draw();
+//        mz_print("HELLO WORLD !", 0, 0, 0);
         break;
 
         // 初期化
@@ -672,7 +685,68 @@ package {
 
 
   }
+    
 
+    // MZフォントで文字列表示
+    public function mz_print(str : String, x : int, y : int, col : int): void {
+      var i : int;
+      var ch : int;
+      var srcrect : Rectangle;
+      var sx : int;
+      var sy : int;
+
+      for (i=0; i<str.length; i++, x += 16) {
+        ch = str.charCodeAt(i);
+        // コード変換
+        ch = Cz80.asc2disp_j[ch];
+
+        if (ch == 0) {
+          continue;
+        }
+
+        // 描画
+        sx = (ch & 15) << 4;
+        sy = (ch & 0x1F0);
+        srcrect = new Rectangle(sx, sy, 16, 16);            // 表示元
+        drawRegion(font[col], x, y, srcrect);
+
+      }
+
+    }
+
+    // MZの画面にテキスト文字を表示（ＱＶＧＡ）
+    //
+    //In:	x = chr.X
+    //		y = chr.Y
+    //		code  = Display Code
+    //		color = Color type 0=白 1=青 2=オレンジ bit8=push
+    // color bit8=左ライン
+    public function mz_kbchr_put(x : int, y: int, str : String, color : uint) : void {
+      var sx : int;
+      var sy : int;
+      var len : int = str.length;
+      var col : int = 0;
+      var c1 : int;
+      var c2 : int;
+
+      if ((color & 7) != 0) {
+        col = 7;
+      }
+      if ((color & 0x100) != 0) {
+        // キーボード押された
+        c1 = kb_col2[color & 7];
+        c2 = kb_col1[color & 7];
+      } else {
+        // キーボード普通
+        c2 = kb_col2[color & 7];
+        c1 = kb_col1[color & 7];
+      }
+
+      fillRect(x, y, len*16, 16, c2);
+      fillRect(x, y, len*16-2, 14, c1);
+      // キートップ
+      mz_print(str, x-1, y-1, col);
+    }
     
     //---------------
     // キー配列の定義

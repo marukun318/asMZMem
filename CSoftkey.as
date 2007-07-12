@@ -68,7 +68,7 @@ package {
 
       // スペース
       0x01,			// 表示開始座標決定
-      (244&255),(244>>8),216,0,		// 位置決定
+      (244&255),(244>>8),232,0,		// 位置決定
       0x02,			// キーボードデータ表示
       48,0xff,        // [SPACE]
 
@@ -88,88 +88,111 @@ package {
 
       // キーコード
       keylst = [
-      _keylst( 1,"\x03\x12",0x00 ),			// 00 [CR]  00
-      _keylst( 0,"\x4F   ",0x01),			// 01 [:]   01
-      _keylst( 0,"\x2C   ",0x02),			// 02 [;]   02
-      _keylst( 3,"\x01\x0C\x10\x08",0x04), // 04 [英数]03
-      _keylst( 0,"\x2b   ",0x05),          // 05 [=]   04
-      _keylst( 3,"\x07\x12\x10\x08",0x06),          // 06 [GRPH]05
-      _keylst( 1,"\x94\x95",0x07),          // 07 KANA  06
+      _keylst( 3, "CR", 0x00 ),			// 00 [CR]  00
+      _keylst( 0, ":", 0x01),			// 01 [:]   01
+      _keylst( 0, ";", 0x02),			// 02 [;]   02
+      _keylst( 3, "ALPH", 0x04), // 04 [英数]03
+      _keylst( 0, "=", 0x05),          // 05 [=]   04
+      _keylst( 3, "GRPH", 0x06),          // 06 [GRPH]05
+      _keylst( 3, "KANA", 0x07),          // 07 KANA  06
       
-      _keylst( 0,"\x69   ",0x13),          // 13 [)]     07
-      _keylst( 0,"\x68   ",0x14),          // 14 [(]     08
-      _keylst( 0,"\x55   ",0x15),          // 15 [@]   09
-      _keylst( 0,"\x1A   ",0x16),          // 16 [Z]   10
-      _keylst( 0,"\x19   ",0x17),          // 17 [Y]   11
+      _keylst( 0, ")", 0x13),          // 13 [)]     07
+      _keylst( 0, "(", 0x14),          // 14 [(]     08
+      _keylst( 0, "@", 0x15),          // 15 [@]   09
+      _keylst( 0, "Z", 0x16),          // 16 [Z]   10
+      _keylst( 0, "Y", 0x17),          // 17 [Y]   11
       
-      _keylst( 0,"\x18   ",0x20),          // 20 [X]   12
-      _keylst( 0,"\x17   ",0x21),          // 21 [W]   13
-      _keylst( 0,"\x16   ",0x22),          // 22 [V]   14
-      _keylst( 0,"\x15   ",0x23),          // 23 [U]   15
-      _keylst( 0,"\x14   ",0x24),          // 24 [T]   16
-      _keylst( 0,"\x13   ",0x25),          // 25 [S]   17
-      _keylst( 0,"\x12   ",0x26),          // 26 [R]   18
-      _keylst( 0,"\x11   ",0x27),          // 27 [Q]   19
+      _keylst( 0, "X", 0x20),          // 20 [X]   12
+      _keylst( 0, "W", 0x21),          // 21 [W]   13
+      _keylst( 0, "V", 0x22),          // 22 [V]   14
+      _keylst( 0, "U", 0x23),          // 23 [U]   15
+      _keylst( 0, "T", 0x24),          // 24 [T]   16
+      _keylst( 0, "S", 0x25),          // 25 [S]   17
+      _keylst( 0, "R", 0x26),          // 26 [R]   18
+      _keylst( 0, "Q", 0x27),          // 27 [Q]   19
       
-      _keylst( 0,"\x10   ",0x30),          // 30 [P]   20
-      _keylst( 0,"\x0f   ",0x31),          // 31 [O]   21
-      _keylst( 0,"\x0e   ",0x32),          // 32 [N]   22
-      _keylst( 0,"\x0d   ",0x33),          // 33 [M]   23
-      _keylst( 0,"\x0c   ",0x34),          // 34 [L]   24
-      _keylst( 0,"\x0b   ",0x35),          // 35 [K]   25
-      _keylst( 0,"\x0a   ",0x36),          // 36 [J]   26
-      _keylst( 0,"\x09   ",0x37),          // 37 [I]   27
+      _keylst( 0, "P", 0x30),          // 30 [P]   20
+      _keylst( 0, "O", 0x31),          // 31 [O]   21
+      _keylst( 0, "N", 0x32),          // 32 [N]   22
+      _keylst( 0, "M", 0x33),          // 33 [M]   23
+      _keylst( 0, "L", 0x34),          // 34 [L]   24
+      _keylst( 0, "K", 0x35),          // 35 [K]   25
+      _keylst( 0, "J", 0x36),          // 36 [J]   26
+      _keylst( 0, "I", 0x37),          // 37 [I]   27
       
-      _keylst( 0,"\x08   ",0x40),          // 40 [H]   28
-      _keylst( 0,"\x07   ",0x41),          // 41 [G]   29
-      _keylst( 0,"\x06   ",0x42),          // 42 [F]   30
-      _keylst( 0,"\x05   ",0x43),          // 43 [E]   31
-      _keylst( 0,"\x04   ",0x44),          // 44 [D]   32
-      _keylst( 0,"\x03   ",0x45),          // 45 [C]   33
-      _keylst( 0,"\x02   ",0x46),          // 46 [B]   34
-      _keylst( 0,"\x01   ",0x47),          // 47 [A]   35
+      _keylst( 0, "H", 0x40),          // 40 [H]   28
+      _keylst( 0, "G" ,0x41),          // 41 [G]   29
+      _keylst( 0, "F", 0x42),          // 42 [F]   30
+      _keylst( 0, "E", 0x43),          // 43 [E]   31
+      _keylst( 0, "D", 0x44),          // 44 [D]   32
+      _keylst( 0, "C", 0x45),          // 45 [C]   33
+      _keylst( 0, "B", 0x46),          // 46 [B]   34
+      _keylst( 0, "A", 0x47),          // 47 [A]   35
 
-      _keylst( 0,"\x28   ",0x50),          // 50 [8]   36
-      _keylst( 0,"\x27   ",0x51),          // 51 [7]   37
-      _keylst( 0,"\x26   ",0x52),          // 52 [6]   38
-      _keylst( 0,"\x25   ",0x53),          // 53 [5]   39
-      _keylst( 0,"\x24   ",0x54),          // 54 [4]   40
-      _keylst( 0,"\x23   ",0x55),          // 55 [3]   41
-      _keylst( 0,"\x22   ",0x56),          // 56 [2]   42
-      _keylst( 0,"\x21   ",0x57),          // 57 [1]   43
+      _keylst( 0, "8", 0x50),          // 50 [8]   36
+      _keylst( 0, "7", 0x51),          // 51 [7]   37
+      _keylst( 0, "6", 0x52),          // 52 [6]   38
+      _keylst( 0, "5", 0x53),          // 53 [5]   39
+      _keylst( 0, "4", 0x54),          // 54 [4]   40
+      _keylst( 0, "3", 0x55),          // 55 [3]   41
+      _keylst( 0, "2", 0x56),          // 56 [2]   42
+      _keylst( 0, "1", 0x57),          // 57 [1]   43
     
-      _keylst( 0,"\x2e   ",0x60),          // 60 [.]   44
-      _keylst( 0,"\x2f   ",0x61),          // 61 [,]   45
-      _keylst( 0,"\x29   ",0x62),          // 62 [9]   46
-      _keylst( 0,"\x20   ",0x63),          // 63 [0]   47
-      _keylst( 4,"\x13\x10\x01\x03\x05",0x64),          // 64 [SPACE]48
-      _keylst( 0,"\x2A   ",0x65),          // 65 [-]   49
-      _keylst( 0,"\x6A   ",0x66),          // 66 [+]   50
-      _keylst( 0,"\x6B   ",0x67),          // 67 [*]   51
+      _keylst( 0, ".", 0x60),          // 60 [.]   44
+      _keylst( 0, ",", 0x61),          // 61 [,]   45
+      _keylst( 0, "9", 0x62),          // 62 [9]   46
+      _keylst( 0, "0", 0x63),          // 63 [0]   47
+      _keylst( 0, "SPACE" ,0x64),      // 64 [SPACE]48
+      _keylst( 0, "-", 0x65),          // 65 [-]   49
+      _keylst( 0, "+", 0x66),          // 66 [+]   50
+      _keylst( 0, "*", 0x67),          // 67 [*]   51
 
-      _keylst( 0,"\x2d   ",0x70),          // 70 [/]   52
-      _keylst( 0,"\x49   ",0x71),          // 71 [?]   53
-      _keylst( 0,"\xc4   ",0x72),          // 72 [<-]  54
-      _keylst( 0,"\xc3   ",0x73),          // 73 [->]  55
-      _keylst( 0,"\xc1    ",0x74),          // 74 [cursor down]56
-      _keylst( 0,"\xc2    ",0x75),          // 75 [cursor up]57
-      _keylst( 2,"\x04\x05\x0c",0x76),          // 76 [DEL]58
-      _keylst( 2,"\x09\x0e\x13",0x77),          // 77 [INS]59
+      _keylst( 0, "/", 0x70),          // 70 [/]   52
+      _keylst( 0, "?", 0x71),          // 71 [?]   53
+      _keylst( 0, "\x3d" , 0x72),          // 72 [<-]  54
+      _keylst( 0, "\x3c" , 0x73),          // 73 [->]  55
+      _keylst( 0, "\x3a" , 0x74),          // 74 [cursor down]56
+      _keylst( 0, "\x3b" , 0x75),          // 75 [cursor up]57
+      _keylst( 2, "DEL", 0x76),          // 76 [DEL]58
+      _keylst( 2, "INS", 0x77),          // 77 [INS]59
     
-      _keylst( 3|8,"\x13\x08\x06\x14",0x80),    // 80 [SHIFT]60 (TOGGLE)
-      _keylst( 3|8,"\x03\x14\x12\x0c",0x86),    // 86 [CTRL]61 (TOGGLE)
-      _keylst( 2,"\x02\x12\x0B",0x87),          // 87 [BREAK]62
+      _keylst( 3|8, "SHFT", 0x80),    // 80 [SHIFT]60 (TOGGLE)
+      _keylst( 3|8, "CTRL", 0x86),    // 86 [CTRL]61 (TOGGLE)
+      _keylst( 2, "BRK", 0x87),          // 87 [BREAK]62
       
-      _keylst( 1,"\x06\x25  ",0x93),          // 93 [F5]63
-      _keylst( 1,"\x06\x24  ",0x94),          // 94 [F4]64
-      _keylst( 1,"\x06\x23  ",0x95),          // 95 [F3]65
-      _keylst( 1,"\x06\x22  ",0x96),          // 96 [F2]66
-      _keylst( 1,"\x06\x21  ",0x97)           // 97 [F1]67
+      _keylst( 1,"F5", 0x93),          // 93 [F5]63
+      _keylst( 1,"F4", 0x94),          // 94 [F4]64
+      _keylst( 1,"F3", 0x95),          // 95 [F3]65
+      _keylst( 1,"F2", 0x96),          // 96 [F2]66
+      _keylst( 1,"F1", 0x97)           // 97 [F1]67
     ];
 
       // ソフトキー初期化
       softkey_init();
     }
+
+    // キーボードパーツの描画
+    // keykind : bit8 = push
+    private function kb_parts_draw(x : int, y : int, keykind : int): int {
+      var pk : Object = keylst[keykind];
+      var str : String;
+      var color : uint;
+      var i : int;
+      var result : int;
+
+      color = pk.type;
+      if ( (keykind & 0x100) != 0) { // 反転表示指定か？
+        color |= 0x100;
+      }
+      
+      str = pk.dispcode;
+      result = (pk.type & 7)+1;	// 文字長
+      m.mz_kbchr_put(x, y, str, color);
+      
+      return result;
+    }
+
+    
 
     //--------------------
     // ソフトキーの初期化
@@ -199,8 +222,9 @@ package {
           case 0x02:
             while (true) {
               ch = KEYPOS[ptr++];
-              if (ch == 0xFF)
+              if (ch == 0xFF) {
                 break;
+              }
               // キーボード情報登録
               with (KEYAREA[pKa]) {
                 flag = 1;
@@ -215,9 +239,10 @@ package {
                rect.height = 16;
               }
               x += ( ((klen << 3)+2) * 2);
+//              trace("pKa = "+pKa);
               pKa++;
             }
-          break;
+           break;
         }
         
       }
@@ -239,8 +264,8 @@ package {
         }
         
         // キーボード表示
-//        klen = kb_parts_draw(KEYAREA[pKa].rect.left, KEYAREA[pKa].rect.top,
-//                             KEYAREA[pKa].keytag);
+        klen = kb_parts_draw(KEYAREA[pKa].rect.left, KEYAREA[pKa].rect.top,
+                             KEYAREA[pKa].keytag);
         
       }
       
@@ -258,11 +283,9 @@ package {
 //		pKt = keylst[KEYAREA[pKa].keytag];
 		if (keylst[KEYAREA[pKa].keytag].keycode == code) {
           // キーボード表示
-/*          
           kb_parts_draw(KEYAREA[pKa].rect.left,
                         KEYAREA[pKa].rect.top,
                         KEYAREA[pKa].keytag);
-  */
 		}
       }
     }
@@ -279,11 +302,9 @@ package {
 //		pKt = keylst[KEYAREA[pKa].keytag];
 		if (keylst[KEYAREA[pKa].keytag].keycode == code) {
           // キーボード表示
-/*          
           kb_parts_draw(KEYAREA[pKa].rect.left,
                         KEYAREA[pKa].rect.top,
                         KEYAREA[pKa].keytag|0x100);
-  */
 		}
       }
     }

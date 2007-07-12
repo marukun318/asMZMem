@@ -20,7 +20,7 @@ package {
 
     private var nowkey : int;   // 現在押されているキーコード
 	private var keymap : int;   // 現在表示されているキーマップ
-//   	pTKEYAREA pa_bak;           // 以前押されていたキーの配置情報
+   	private var pa_bak : Object = null; // 以前押されていたキーの配置情報
 
     // ソフトキー配置情報
     private static var KEYAREA : Array = new Array();
@@ -306,140 +306,116 @@ package {
       }
     }
 
-/*
-//
-int softkey_search(short x, short y, pTKEYAREA *pKret)
-{
-	int result = -1;
-	int i;
-	int xp,yp;
-	pTKEYAREA pKa;
-	
-	pKa = skeyWk->keyarea;		// キー配置情報ワーク
-	
-	for (i=0; i<SOFTKEY_MAX; i++, pKa++)
-	{
-		if (!pKa->flag)
-			continue;
+    // 引数の位置がソフトキーデータにヒットしているか
+    public function softkey_search(x: int, y: int) : Object {
+      var result : Object = null;
+      var i : int;
+      var xp : int, yp : int;
+      var pKa : int = 0;
+      
+      for (i=0; i<SOFTKEY_MAX; i++, pKa++) {
+        if (KEYAREA[pKa].flag == 0) {
+          continue;
+        }
 		
 		//
-		xp = pKa->rect.left;
-		yp = pKa->rect.top;
+		xp = KEYAREA[pKa].left;
+		yp = KEYAREA[pKa].top;
 		if (x>=xp && y>=yp &&
-			x<(xp+pKa->rect.width) && y<(yp+pKa->rect.height) )
-		{
-			result = pKa->keytag;
-			if (pKret)
-			{
-				*pKret = pKa;
-			}
-			break;
-		}
-	}
-	
-	return result;
-}
+			x<(xp+KEYAREA[pKa].rect.width) && y<(yp+KEYAREA[pKa].rect.height) )	{
+          result = KEYAREA[pKa];
+          break;
+        }
+      }
+      
+      return result;
+    }
 
+    // ソフトキー　押下
+    public function softkey_down(x: int, y: int, first : int) : void {
+      var pa : Object = softkey_search(x, y);
+      var keyno : int = -1;
 
-//
-void softkey_down(short x, short y, int first)
-{
-	pTKEYAREA pa;
-	pTKEYTAG pKt;
-	int keyno = softkey_search(x,y,&pa);
-	
-	if (keyno >= 0)
-	{
-		// 前と違うキーが押されてたら
-		if (skeyWk->nowkey != keyno)
-		{
-			// 前のキーは離す
-			if (skeyWk->nowkey >= 0)
-			{
-				//
-				softkey_upkeydraw(keylst[skeyWk->pa_bak->keytag].keycode);				// ソフトキーを離したときの描画
-				skeyWk->pa_bak = NULL;
-				mz_keyup((DWORD)keylst[skeyWk->nowkey].keycode);
-			}
-		}
-		skeyWk->nowkey = keyno;
+      if (pa != null) {
+        keyno = pa.keycode;
+      }
+      
+      if (keyno >= 0) {
+        // 前と違うキーが押されてたら
+        if (this.nowkey != keyno) {
+          // 前のキーは離す
+          if (this.nowkey >= 0) {
+            //
+            softkey_upkeydraw(keylst[this.pa_bak.keytag].keycode);				// ソフトキーを離したときの描画
+            this.pa_bak = null;
+            mz_keyup(keylst[this.nowkey].keycode);
+          }
+        }
+        this.nowkey = keyno;
 
 		//
-		pKt = &keylst[keyno];
-		if (pKt->type & 8)
-		{
-			skeyWk->nowkey = -1;
-			skeyWk->pa_bak = NULL;
-			if (first)													// 最初のタッチだったら…
-			{
-				// トグルキー
-				if (mz_keychk((DWORD)pKt->keycode) )
-				{
-					// 押されていたなら復帰
-					softkey_upkeydraw(pKt->keycode);					// ソフトキーを離したときの描画
-					mz_keyup((DWORD)pKt->keycode);
-				}
-				else
-				{
-					// 押されていなかったから押す
-					softkey_downkeydraw(pKt->keycode);					// ソフトキーを押したときの描画
-					mz_keydown((DWORD)pKt->keycode);
-				}
-			}
-		}
-		else
-		{
-			// 通常
-			// 押されたキーの表示
-			softkey_downkeydraw(pKt->keycode);					// ソフトキーを押したときの描画
-			
-			mz_keydown((DWORD)pKt->keycode);
-			skeyWk->pa_bak = pa;
-		}
-	}
-	else
-	{
-		// ヘンなトコ押したので
-		// 前のキーは離す
-		if (skeyWk->nowkey >= 0)
-		{
-			mz_keyup((DWORD)keylst[skeyWk->nowkey].keycode);
-			//
-			softkey_upkeydraw(keylst[skeyWk->nowkey].keycode);			// ソフトキーを離したときの描画
-			skeyWk->pa_bak = NULL;
-		}
-		skeyWk->nowkey = -1;
-	}
+//		pKt = &keylst[keyno];
+		if ((keylst[keyno].type & 8)!=0) {
+          this.nowkey = -1;
+          this.pa_bak = null;
+          if (first) {          // 最初のタッチだったら…
+            // トグルキー
+            if (mz_keychk(keylst[keyno].keycode) == true) { // 
+              // 押されていたなら復帰
+              softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
+              mz_keyup(keylst[keyno].keycode);
+            } else {
+              // 押されていなかったから押す
+              softkey_downkeydraw(keylst[keyno].keycode); // ソフトキーを押したときの描画
+              mz_keydown(keylst[keyno].keycode);
+            }
+          }
+        } else {
+          // 通常
+          // 押されたキーの表示
+          softkey_downkeydraw(keylst[keyno].keycode); // ソフトキーを押したときの描画
+          
+          mz_keydown(keylst[keyno].keycode);
+          this.pa_bak = pa;
+        }
+      } else {
+        // ヘンなトコ押したので
+        // 前のキーは離す
+        if (this.nowkey >= 0) {
+          mz_keyup(keylst[keyno].keycode);
+          //
+          softkey_upkeydraw(keylst[this.nowkey].keycode); // ソフトキーを離したときの描画
+          this.pa_bak = null;
+        }
+        this.nowkey = -1;
+      }
 
-}
+    }
 
-//
-void softkey_up(short x, short y)
-{
-	pTKEYAREA pa;
-	pTKEYTAG pKt;
-	int keyno = softkey_search(x,y,&pa);
+    //
+    public function softkey_up(x : int, y : int) : void {
+      var pa : Object = softkey_search(x, y);
+      var keyno : int = -1;
 
-	if (keyno >= 0)
-	{
-		//
-		pKt = &keylst[keyno];
-		if (!(pKt->type & 8))
-		{
-			// トグルキーでなかったら
-			// ソフトキーの表示を復帰
-			softkey_upkeydraw((DWORD)pKt->keycode);						// ソフトキーを離したときの描画
-			skeyWk->pa_bak = NULL;
-			
-			skeyWk->nowkey = -1;
-			mz_keyup((DWORD)pKt->keycode);
-		}
+      if (pa != null) {
+        keyno = pa.keycode;
+      }
+
+      if (keyno >= 0) {
+        //
+		if ((keylst[keyno].type & 8)==0) {
+          // トグルキーでなかったら
+          // ソフトキーの表示を復帰
+          softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
+          this.pa_bak = null;
+          
+          this.nowkey = -1;
+          mz_keyup(keylst[keyno].keycode);
+        }
 		
-	}
+      }
 
-}
-
-*/  
+    }
 
 
 

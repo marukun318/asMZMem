@@ -293,26 +293,27 @@ package {
       
       case ST_RUNNING:
         // Shiftキーの更新
-        if (fShift) {
+        if (fShift || skey.fShift) {
           mem.keyDown(8, 0);
         } else {
           mem.keyUp(8, 0);
         }
 
         // Ctrlキーの更新
-        if (fCtrl) {
+        if (fCtrl || skey.fCtrl) {
           mem.keyDown(8, 6);
         } else {
           mem.keyUp(8, 6);
         }
-
-//        updateKeyboard();       // キーボード更新
         
         // キー挙動　調整
         if (couKeyUp >0 ) {
           if ((--couKeyUp)==0) {
-            mem.keyClear();
-//            trace("keyClear()");
+            mem.keyUp(8, 0);    // shift
+            mem.keyUp(8, 6);    // ctrl
+
+//            mem.keyClear();
+            trace("keyClear()");
           }
         }
         z80.update(int(Cz80.CPU_SPEED/30)); // ＣＰＵ実行：秒間３０ｆ
@@ -450,16 +451,16 @@ package {
 
     // マウスアップハンドラー
     private function mouseUpHandler(e:MouseEvent) : void {
-      trace("mouseUpHandler() x="+e.localX+" y="+e.localY);
+//      trace("mouseUpHandler() x="+e.localX+" y="+e.localY);
 
       skey.softkey_up(e.localX, e.localY);
     }
 
     // マウスダウンハンドラー
     private function mouseDownHandler(e:MouseEvent) : void {
-      trace("mouseDownHandler()");
+//      trace("mouseDownHandler()");
 
-      skey.softkey_down(e.localX, e.localY, 0);
+      skey.softkey_down(e.localX, e.localY);
     }
 
     //--------------------------

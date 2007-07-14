@@ -21,8 +21,11 @@ package {
 //    private static const SOFTKEY_MAX : int = 100;
 
     private var nowkey : int;   // 現在押されているキーコード
-	private var keymap : int;   // 現在表示されているキーマップ
+//	private var keymap : int;   // 現在表示されているキーマップ
    	private var pa_bak : Object = null; // 以前押されていたキーの配置情報
+
+    public var fShift : Boolean = false; // シフトキー押下フラグ
+    public var fCtrl : Boolean = false; // Ctrlキー押下フラグ
 
     // ソフトキー配置情報
     private static var KEYAREA : Array = new Array();
@@ -175,7 +178,7 @@ package {
       _keylst( 2, "INS", 0x77),          // 77 [INS]59
     
       _keylst( 3|8, "SHFT", 0x80),    // 80 [SHIFT]60 (TOGGLE)
-      _keylst( 3|8, "CTRL", 0x86),    // 86 [CTRL]61 (TOGGLE)
+      _keylst( 3|16, "CTRL", 0x86),    // 86 [CTRL]61 (TOGGLE)
       _keylst( 2, "BRK", 0x87),          // 87 [BREAK]62
       
       _keylst( 1,"F5", 0x93),          // 93 [F5]63
@@ -345,14 +348,14 @@ package {
     }
 
     // ソフトキー　押下
-    public function softkey_down(x: int, y: int, first : int) : void {
+    public function softkey_down(x: int, y: int) : void {
       var pa : Object = softkey_search(x, y);
       var keyno : int = -1;
 
       if (pa != null) {
         keyno = pa.keytag;
       }
-      
+
       trace("softkey_down("+keyno+")");
       
       if (keyno >= 0) {
@@ -369,22 +372,40 @@ package {
         this.nowkey = keyno;
 
 		//
-//		pKt = &keylst[keyno];
-		if ((keylst[keyno].type & 8)!=0) {
+		if ((keylst[keyno].type & 24)!=0) {
+          // Shift, CTRL
           this.nowkey = -1;
           this.pa_bak = null;
-          if (first) {          // 最初のタッチだったら…
-            // トグルキー
-            if (mz_keychk(keylst[keyno].keycode) == true) { // 
-              // 押されていたなら復帰
-              softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
-              mz_keyup(keylst[keyno].keycode);
-            } else {
-              // 押されていなかったから押す
-              softkey_downkeydraw(keylst[keyno].keycode); // ソフトキーを押したときの描画
-              mz_keydown(keylst[keyno].keycode);
-            }
+          var btn : Boolean;
+
+          if ((keylst[keyno].type & 8)!=0) {
+            btn = fShift;
           }
+          if ((keylst[keyno].type & 16)!=0) {
+            btn = fCtrl;
+          }
+          // トグルキー
+          if (btn == true) { // 
+            // 押されていたなら復帰
+            trace("toggle:up");
+            softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
+//            mz_keyup(keylst[keyno].keycode);
+            btn = false;
+          } else {
+            // 押されていなかったから押す
+            trace("toggle:down");
+            softkey_downkeydraw(keylst[keyno].keycode); // ソフトキーを押したときの描画
+//            mz_keydown(keylst[keyno].keycode);
+            btn = true;
+          }
+
+          if ((keylst[keyno].type & 8)!=0) {
+            fShift = btn;
+          }
+          if ((keylst[keyno].type & 16)!=0) {
+            fCtrl = btn;
+          }
+          
         } else {
           // 通常
           // 押されたキーの表示
@@ -425,7 +446,7 @@ package {
       
       if (keyno >= 0) {
         //
-		if ((keylst[keyno].type & 8)==0) {
+		if ((keylst[keyno].type & 24)==0) {
           // トグルキーでなかったら
           // ソフトキーの表示を復帰
           softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
@@ -442,15 +463,33 @@ package {
     // キーが押された（ソフトキーから呼び出し）
     private function mz_keydown(code : int) :void {
       mem.keyDown(code >> 4, code & 0x0F);
+/*      
+      if (fShift == true) {
+        mem.keyDown(8, 0);
+      }
+      if (fCtrl == true) {
+        mem.keyDown(8, 6);
+      }
+ */
     }
     
     // キーが離された（ソフトキーから呼び出し）
     private function mz_keyup(code : int) :void {
       mem.keyUp(code >> 4, code & 0x0F);
+      /*
+      if (fShift == true) {
+        mem.keyUp(8, 0);
+      }
+      if (fCtrl == true) {
+        mem.keyUp(8, 6);
+      }
+        */
     }
 
     // キーが押されているか
     private function mz_keychk(code : int) : Boolean {
+      var r : Boolean = mem.keyChk(code >> 4, code & 0x0F);
+      trace("mz_keychk()="+r);
       return mem.keyChk(code >> 4, code & 0x0F);
     }
 

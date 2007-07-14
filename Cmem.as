@@ -155,7 +155,7 @@ package {
     //------------------------
     // Out : true = 押されている
     public function keyChk(row: int, col: int): Boolean  {
-      return (keyports[row] & (1 << col)) == 0;
+      return Boolean((keyports[row] & (1 << col)) == 0);
     }
 
     //----------

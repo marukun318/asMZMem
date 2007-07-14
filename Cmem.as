@@ -150,6 +150,14 @@ package {
       keyports[row] |= (1 << col);
     }
 
+    //------------------------
+    // キーの押下状態チェック
+    //------------------------
+    // Out : true = 押されている
+    public function keyChk(row: int, col: int): Boolean  {
+      return (keyports[row] & (1 << col)) == 0;
+    }
+
     //----------
     // リセット
     //----------

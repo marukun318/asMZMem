@@ -100,7 +100,7 @@ package {
     private static var format: TextFormat; //フォーマット
     //コンストラクタ
     public function asMZMem(){
-      skey = new CSoftkey(this); // ソフトキークラスの作成
+      skey = new CSoftkey(this, mem); // ソフトキークラスの作成
 
       ST = ST_ROMMON;           // ＲＯＭモニタセットアップ
 
@@ -129,7 +129,9 @@ package {
       child.addEventListener(KeyboardEvent.KEY_DOWN,keyDownHandler);
       child.addEventListener(KeyboardEvent.KEY_UP,keyUpHandler);
       child.addEventListener(Event.ENTER_FRAME, enterFrameHandler);
-      child.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void { stage.focus = child; });
+      child.addEventListener(MouseEvent.CLICK, mouseClickHandler);
+      child.addEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);
+      child.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
 
       // フォーカス枠の消去
       stage.stageFocusRect = false;
@@ -441,6 +443,25 @@ package {
 //      evt.updateAfterEvent();
     }
 
+    // マウスクリックハンドラー
+    private function mouseClickHandler(e:MouseEvent) : void {
+      stage.focus = child;
+    }
+
+    // マウスアップハンドラー
+    private function mouseUpHandler(e:MouseEvent) : void {
+      trace("mouseUpHandler() x="+e.localX+" y="+e.localY);
+
+      skey.softkey_up(e.localX, e.localY);
+    }
+
+    // マウスダウンハンドラー
+    private function mouseDownHandler(e:MouseEvent) : void {
+      trace("mouseDownHandler()");
+
+      skey.softkey_down(e.localX, e.localY, 0);
+    }
+
     //--------------------------
     // BITMAP download handler
     //--------------------------
@@ -685,7 +706,6 @@ package {
 
 
   }
-    
 
     // MZフォントで文字列表示
     public function mz_print(str : String, x : int, y : int, col : int): void {
@@ -725,12 +745,12 @@ package {
       var sx : int;
       var sy : int;
       var len : int = str.length;
-      var col : int = 0;
+      var mcol : int = 0;
       var c1 : int;
       var c2 : int;
 
       if ((color & 7) != 0) {
-        col = 7;
+        mcol = 7;
       }
       if ((color & 0x100) != 0) {
         // キーボード押された
@@ -745,7 +765,7 @@ package {
       fillRect(x, y, len*16, 16, c2);
       fillRect(x, y, len*16-2, 14, c1);
       // キートップ
-      mz_print(str, x-1, y-1, col);
+      mz_print(str, x-1, y-1, mcol);
     }
     
     //---------------

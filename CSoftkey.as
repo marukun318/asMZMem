@@ -14,9 +14,11 @@ package {
   public class CSoftkey {
     // メインクラス
     private static var m : asMZMem;
+    // メモリクラス
+    private static var mem : Cmem;
 
     // ソフトキーの最大数
-    private static const SOFTKEY_MAX : int = 100;
+//    private static const SOFTKEY_MAX : int = 100;
 
     private var nowkey : int;   // 現在押されているキーコード
 	private var keymap : int;   // 現在表示されているキーマップ
@@ -78,13 +80,9 @@ package {
 
 
     //コンストラクタ
-    public function CSoftkey(main : asMZMem){
+    public function CSoftkey(main : asMZMem, memory : Cmem){
       m = main;
-
-      // キー配置情報の作成
-      for (var i:int = 0; i<SOFTKEY_MAX; i++) {
-        KEYAREA[i] = { flag : new int(), keytag : new int(), rect : new Rectangle() };
-      }
+      mem = memory;
 
       // キーコード
       keylst = [
@@ -174,7 +172,7 @@ package {
     // キーボードパーツの描画
     // keykind : bit8 = push
     private function kb_parts_draw(x : int, y : int, keykind : int): int {
-      var pk : Object = keylst[keykind];
+      var pk : Object = keylst[keykind & 0xFF];
       var str : String;
       var color : uint;
       var i : int;
@@ -223,13 +221,16 @@ package {
                 break;
               }
               // キーボード情報登録
+              KEYAREA[pKa] = { keytag : new int(), rect : new Rectangle() };
+              // キー配置情報の作成
               with (KEYAREA[pKa]) {
-                flag = 1;
+//                flag = 1;
                 keytag = ch;
                 rect.left = x;
                 rect.top = y;
               }
-              klen = (keylst[ch].type & 7)+1;
+              klen = keylst[ch].dispcode.length;
+//              klen = (keylst[ch].type & 7)+1;
               
               with (KEYAREA[pKa]) {
                rect.width = (klen << 4);
@@ -245,20 +246,16 @@ package {
       }
       //
       nowkey = -1;        // 押されたキーは無し
-      //      skeyWk->pa_bak = NULL;												/* 以前押されていたキーの配置情報 */
-
+      this.pa_bak = null;       // 以前押されていたキーの配置情報
     }
 
     // ソフトキーの描画
     public function softkey_draw() : void {
       var ch : int, x : int, y : int, num : int;
       var klen : int;
-      var pKa : int = 0;
+      var pKa : int;
 
-      for (;;pKa++) {
-        if (KEYAREA[pKa].flag == 0) {
-            break;
-        }
+      for (pKa = 0; pKa < KEYAREA.length; pKa++) {
         
         // キーボード表示
         klen = kb_parts_draw(KEYAREA[pKa].rect.left, KEYAREA[pKa].rect.top,
@@ -270,14 +267,10 @@ package {
 
     // ソフトキーを離したときの描画
     public function softkey_upkeydraw(code : int) : void {
-      var pKa : int = 0; //skeyWk->keyarea;		// キー配置情報ワーク
-	
-      for (;;pKa++) {
-        if (KEYAREA[pKa].flag == 0) {
-          break;
-        }
-
-//		pKt = keylst[KEYAREA[pKa].keytag];
+      var pKa : int; //skeyWk->keyarea;		// キー配置情報ワーク
+      
+      trace("softkey_upkeydraw("+code+")");
+      for (pKa = 0; pKa < KEYAREA.length; pKa++) {
 		if (keylst[KEYAREA[pKa].keytag].keycode == code) {
           // キーボード表示
           kb_parts_draw(KEYAREA[pKa].rect.left,
@@ -289,14 +282,9 @@ package {
 
     // ソフトキーを押したときの描画
     public function softkey_downkeydraw(code : int) : void {
-      var pKa : int = 0; //skeyWk->keyarea;		// キー配置情報ワーク
+      var pKa : int; //skeyWk->keyarea;		// キー配置情報ワーク
 	
-      for (;;pKa++) {
-        if (KEYAREA[pKa].flag == 0) {
-          break;
-        }
-
-//		pKt = keylst[KEYAREA[pKa].keytag];
+      for (pKa = 0; pKa < KEYAREA.length; pKa++) {
 		if (keylst[KEYAREA[pKa].keytag].keycode == code) {
           // キーボード表示
           kb_parts_draw(KEYAREA[pKa].rect.left,
@@ -311,16 +299,21 @@ package {
       var result : Object = null;
       var i : int;
       var xp : int, yp : int;
-      var pKa : int = 0;
+      var pKa : int;
+
+//      trace("x="+x+" y="+y);
       
-      for (i=0; i<SOFTKEY_MAX; i++, pKa++) {
-        if (KEYAREA[pKa].flag == 0) {
-          continue;
-        }
-		
+//      for (i=0; i<SOFTKEY_MAX; i++, pKa++) {
+      for (pKa = 0; pKa < KEYAREA.length; pKa++) {
+//        if (KEYAREA[pKa].flag == 0) {
+//          continue;
+//        }
+
 		//
-		xp = KEYAREA[pKa].left;
-		yp = KEYAREA[pKa].top;
+		xp = KEYAREA[pKa].rect.left;
+		yp = KEYAREA[pKa].rect.top;
+//        trace(i+": xp="+xp+" yp="+yp);
+		
 		if (x>=xp && y>=yp &&
 			x<(xp+KEYAREA[pKa].rect.width) && y<(yp+KEYAREA[pKa].rect.height) )	{
           result = KEYAREA[pKa];
@@ -337,8 +330,10 @@ package {
       var keyno : int = -1;
 
       if (pa != null) {
-        keyno = pa.keycode;
+        keyno = pa.keytag;
       }
+      
+      trace("softkey_down("+keyno+")");
       
       if (keyno >= 0) {
         // 前と違うキーが押されてたら
@@ -394,13 +389,20 @@ package {
 
     //
     public function softkey_up(x : int, y : int) : void {
-      var pa : Object = softkey_search(x, y);
+      var pa : Object;
       var keyno : int = -1;
 
+      if (this.pa_bak != null) {
+        pa = pa_bak;
+      } else {
+        pa = softkey_search(x, y);
+      }
       if (pa != null) {
-        keyno = pa.keycode;
+        keyno = pa.keytag;
       }
 
+      trace("softkey_up("+keyno+")");
+      
       if (keyno >= 0) {
         //
 		if ((keylst[keyno].type & 8)==0) {
@@ -417,15 +419,21 @@ package {
 
     }
 
-
-
-
-
-
-
-
-
+    // キーが押された（ソフトキーから呼び出し）
+    private function mz_keydown(code : int) :void {
+      mem.keyDown(code >> 4, code & 0x0F);
+    }
     
+    // キーが離された（ソフトキーから呼び出し）
+    private function mz_keyup(code : int) :void {
+      mem.keyUp(code >> 4, code & 0x0F);
+    }
+
+    // キーが押されているか
+    private function mz_keychk(code : int) : Boolean {
+      return mem.keyChk(code >> 4, code & 0x0F);
+    }
+
     // 構造体
     private function _keylst(tp : int, disp: String, kcode : int) : Object {
       return { type: tp, dispcode: disp, keycode: kcode };

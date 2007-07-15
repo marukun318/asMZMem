@@ -313,7 +313,7 @@ package {
             mem.keyUp(8, 6);    // ctrl
 
 //            mem.keyClear();
-            trace("keyClear()");
+//            trace("keyClear()");
           }
         }
         z80.update(int(Cz80.CPU_SPEED/30)); // ＣＰＵ実行：秒間３０ｆ

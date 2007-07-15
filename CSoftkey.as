@@ -292,7 +292,7 @@ package {
     public function softkey_upkeydraw(code : int) : void {
       var pKa : int; //skeyWk->keyarea;		// キー配置情報ワーク
       
-      trace("softkey_upkeydraw("+code+")");
+//      trace("softkey_upkeydraw("+code+")");
       for (pKa = 0; pKa < KEYAREA.length; pKa++) {
 		if (keylst[KEYAREA[pKa].keytag].keycode == code) {
           // キーボード表示
@@ -356,7 +356,7 @@ package {
         keyno = pa.keytag;
       }
 
-      trace("softkey_down("+keyno+")");
+//      trace("softkey_down("+keyno+")");
       
       if (keyno >= 0) {
         // 前と違うキーが押されてたら
@@ -387,13 +387,13 @@ package {
           // トグルキー
           if (btn == true) { // 
             // 押されていたなら復帰
-            trace("toggle:up");
+//            trace("toggle:up");
             softkey_upkeydraw(keylst[keyno].keycode); // ソフトキーを離したときの描画
 //            mz_keyup(keylst[keyno].keycode);
             btn = false;
           } else {
             // 押されていなかったから押す
-            trace("toggle:down");
+//            trace("toggle:down");
             softkey_downkeydraw(keylst[keyno].keycode); // ソフトキーを押したときの描画
 //            mz_keydown(keylst[keyno].keycode);
             btn = true;
@@ -442,7 +442,7 @@ package {
         keyno = pa.keytag;
       }
 
-      trace("softkey_up("+keyno+")");
+//      trace("softkey_up("+keyno+")");
       
       if (keyno >= 0) {
         //
@@ -489,7 +489,7 @@ package {
     // キーが押されているか
     private function mz_keychk(code : int) : Boolean {
       var r : Boolean = mem.keyChk(code >> 4, code & 0x0F);
-      trace("mz_keychk()="+r);
+//      trace("mz_keychk()="+r);
       return mem.keyChk(code >> 4, code & 0x0F);
     }
 

@@ -170,10 +170,10 @@ package {
 
       _keylst( 0, "/", 0x70),          // 70 [/]   52
       _keylst( 0, "?", 0x71),          // 71 [?]   53
-      _keylst( 0, "\x5F" , 0x72),          // 72 [<-]  54
-      _keylst( 0, "\xC0" , 0x73),          // 73 [->]  55
-      _keylst( 0, "\x80" , 0x74),          // 74 [cursor down]56
-      _keylst( 0, "\x5E" , 0x75),          // 75 [cursor up]57
+      _keylst( 3, "\x5F" , 0x72),          // 72 [<-]  54
+      _keylst( 3, "\xC0" , 0x73),          // 73 [->]  55
+      _keylst( 3, "\x80" , 0x74),          // 74 [cursor down]56
+      _keylst( 3, "\x5E" , 0x75),          // 75 [cursor up]57
       _keylst( 2, "DEL", 0x76),          // 76 [DEL]58
       _keylst( 2, "INS", 0x77),          // 77 [INS]59
     

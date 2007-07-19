@@ -122,7 +122,7 @@ package {
 //      addChild(label);
 
       // 仮想画面追加
-      offImg = new BitmapData(640, 568, false, 0xffffffff);
+      offImg = new BitmapData(stage.stageWidth, stage.stageHeight, false, 0xffffffff);
       child.addChild(new Bitmap(offImg));
 
       // イベントリスナーの登録

@@ -1,0 +1,12 @@
+﻿<flash_project name="mzmLoader" version="1">
+    <project_folder name="chrgra" expanded="false">
+        <project_file path="./chrgra/gura019.gif" filetype="gif" />
+        <project_file path="./chrgra/gura015.gif" filetype="gif" />
+        <project_file path="./chrgra/gura016.gif" filetype="gif" />
+        <project_file path="./chrgra/gura017.gif" filetype="gif" />
+    </project_folder>
+    <project_folder name="buttons" expanded="false">
+        <project_file path="./buttons/get_flash_player.gif" filetype="gif" />
+    </project_folder>
+    <project_file path="./mzmLoader_as2.fla" filetype="fla" profile="" />
+</flash_project>

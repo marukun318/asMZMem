@@ -59,6 +59,9 @@ package {
       0x9c9c9b, 0x151074, 0x815a17, 0x815a17
       ];
 
+    // サウンドドライバ
+    private var dyn_sound : CSoundDriver = new CSoundDriver();
+    
     // ＶＭ関連
     private var _8253: C8253 = new C8253(); // ８２５３クラス
     private var mem: Cmem = new Cmem(_8253); // メモリクラス
@@ -283,6 +286,7 @@ package {
         
       case ST_ENGINEINIT:
         // 起動直前
+        dyn_sound.start();      // サウンドドライバの開始
         mem.keyClear();         // キーボード初期化
         resetAll();             // リセット
 

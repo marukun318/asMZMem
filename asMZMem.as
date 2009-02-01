@@ -19,7 +19,8 @@ package {
   public class asMZMem extends Sprite {
 
     // ＲＯＭモニタ
-    [Embed(source='data/NEWMON7.ROM', mimeType='application/octet-stream')] 
+//    [Embed(source='data/NEWMON7.ROM', mimeType='application/octet-stream')] 
+    [Embed(source='data/1Z009.ROM', mimeType='application/octet-stream')] 
 	  private static const RomMon: Class;
 
     // key.def
@@ -307,6 +308,7 @@ package {
         }
         
         // キー挙動　調整
+/*        
         if (couKeyUp >0 ) {
           if ((--couKeyUp)==0) {
             mem.keyUp(8, 0);    // shift
@@ -316,6 +318,7 @@ package {
 //            trace("keyClear()");
           }
         }
+*/
         z80.update(int(Cz80.CPU_SPEED/30)); // ＣＰＵ実行：秒間３０ｆ
 
 /*        
@@ -340,11 +343,6 @@ package {
       case ST_RUNNING:
         // 描画
         drawScreen700();
-//        drawScreenBG();
-//        drawScreenFG();
-        // ソフトキーボード描画
-//        skey.softkey_draw();
-//        mz_print("HELLO WORLD !", 0, 0, 0);
         break;
 
         // 初期化
@@ -845,6 +843,7 @@ package {
         b[i] = mon[i];
       }
 
+      if (b[0x06F3] != '1') {
         // NEW MONITOR用パッチ
         // SCROLL
         b[Cmem.ROM_START+0x0e42] = 0xed;
@@ -874,7 +873,8 @@ package {
         b[Cmem.ROM_START+0x0946] = 0xed;
         b[Cmem.ROM_START+0x0947] = 0xf5;
         b[Cmem.ROM_START+0x0948] = 0xc9;
-
+      }
+      
     }
 
     //-----------------------

@@ -37,10 +37,13 @@ package {
     private var counter_lat:Array = new Array(3); // Counter latch
     private var bit_hl:Array = new Array(3); // H/L
 
+    private var snd : CSoundDriver;
+
     //==========================================================================
     // コンストラクタ
     //==========================================================================
-    public function C8253() {
+    public function C8253(arg: CSoundDriver) {
+      snd = arg;
       init();
     }
 
@@ -289,7 +292,7 @@ package {
       /* サウンド用のカウンタの場合 */
       if (cnt == 0) {
         if(bit_hl[cnt]==0) {
-          //        play8253();
+          play8253();
         }
       }
 
@@ -304,10 +307,7 @@ package {
        */
       st_beep_mask = val & 0x01;
       st_int_mask=val & 0x04;
-      //#if _DEBUG
-      //		dprintf("write beep_mask=%d int_mask=%d\n",_8253_dat.beep_mask,_8253_dat.int_mask);
-      //#endif
-      //		play8253();
+      play8253();
     }
 
     /// E003 out
@@ -353,7 +353,7 @@ package {
         }
       }
       if (i==0 || i==2) {
-        //      play8253();
+        play8253();
       }
 
     }
@@ -361,7 +361,46 @@ package {
     /// E008 out
     public function outE008(val:int): void {
       st_makesound=(val&1);
-      //play8253();
+      play8253();
     }
+
+    /////////////////////////////////////////////////////////////////
+    // 8253 SOUND
+    /////////////////////////////////////////////////////////////////
+    private function play8253() : void {
+      var freq2: int;
+      var freqtmp: int;
+
+ //     if (sound_di) {
+ //       return;
+ //     }
+
+      if ((!st_beep_mask)  ){
+        if (st_setsound)	{
+          st_setsound = 0;
+          snd.stop();
+        }
+        return;
+      }
+
+      // サウンドを鳴らす
+      freqtmp = counter_base[0];
+      if (st_makesound == 0) {
+        st_setsound = 0;
+        snd.stop();
+      } else if (freqtmp>=0) {
+        // play
+        freq2 = (895000 / freqtmp);
+        st_setsound = 1;
+        snd.setFreq(freq2);
+      } else {
+        // stop
+        snd.stop();
+      }
+    }
+   
   }
+
+
+
 }

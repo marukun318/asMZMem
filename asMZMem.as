@@ -63,7 +63,7 @@ package {
     private var dyn_sound : CSoundDriver = new CSoundDriver();
     
     // ＶＭ関連
-    private var _8253: C8253 = new C8253(); // ８２５３クラス
+    private var _8253: C8253 = new C8253(dyn_sound); // ８２５３クラス
     private var mem: Cmem = new Cmem(_8253); // メモリクラス
     private var io: Cio = new Cio(mem); // Ｉ／Ｏクラス
     private var z80: Cz80 = new Cz80(_8253, mem, io); // Ｚ８０クラス
@@ -323,7 +323,11 @@ package {
           }
         }
 */
-        z80.update(int(Cz80.CPU_SPEED/30)); // ＣＰＵ実行：秒間３０ｆ
+        z80.update(int(Cz80.CPU_SPEED/60)); // ＣＰＵ実行：秒間３０ｆ
+        dyn_sound.update(0);     // サウンド更新
+        
+        z80.update(int(Cz80.CPU_SPEED/60)); // ＣＰＵ実行：秒間３０ｆ
+        dyn_sound.update(1);     // サウンド更新
 
 /*        
         // MZT読み込み

@@ -92,7 +92,7 @@ package {
     private static var loadFont : int;
 
     // 読み込みmztファイル名
-    private static var mztname : String = "WH_newmon.mzt";
+    private static var mztname : String = "data/WH_newmon.mzt";
     
     // 仮想画面
     private static var offImg: BitmapData;

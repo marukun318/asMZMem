@@ -19,8 +19,8 @@ package {
   public class asMZMem extends Sprite {
 
     // ＲＯＭモニタ
-//    [Embed(source='data/NEWMON7.ROM', mimeType='application/octet-stream')] 
-    [Embed(source='data/1Z009.ROM', mimeType='application/octet-stream')] 
+    [Embed(source='data/NEWMON7.ROM', mimeType='application/octet-stream')] 
+//    [Embed(source='data/1Z009.ROM', mimeType='application/octet-stream')] 
 	  private static const RomMon: Class;
 
     // key.def
@@ -122,8 +122,6 @@ package {
       //
       child = new Sprite();
       addChild(child);
-
-//      addChild(label);
 
       // 仮想画面追加
       offImg = new BitmapData(stage.stageWidth, stage.stageHeight, false, 0xffffffff);

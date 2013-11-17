@@ -12,3 +12,10 @@ Flex SDK の、mxmlc でコンパイルします。
 
 動作例：
 http://web700.marukun.com/wh.html
+
+MZ NEW-MONITOR
+Copyright 1982,1983,2000 武蔵野マイコンクラブ
+
+WONDER HOUSE
+(c) 1983,2001,2003 TASK FORTS KOCHI.
+

@@ -18,6 +18,10 @@ http://www.adobe.com/jp/devnet/flashplayer/articles/fp8_security.html
 
 \Documents and Settings\ユーザー名\Application Data\Macromedia\Flash Player\#Security\FlashPlayerTrust
 
+Windows8 では、
+\Windows\System32\Macromed\Flash\FlashPlayerTrust
+
+
 直下に、設定ファイル
 
 foo.cfg (拡張子以外は任意)
